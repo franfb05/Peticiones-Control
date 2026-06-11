@@ -55,6 +55,7 @@
   input, select { font-family:var(--font); font-size:14px; padding:10px 12px; border:1.5px solid var(--gray-200); border-radius:8px; width:100%; }
   input:focus, select:focus { outline:none; border-color:var(--green); }
   .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:4px; }
+  .success-msg { background:var(--green-light); color:var(--green); padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:14px; }
   .error-msg { background:var(--red-light); color:var(--red); padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:14px; }
   .loading { text-align:center; padding:48px; color:var(--gray-400); }
   .empty { text-align:center; padding:48px; color:var(--gray-400); font-size:14px; }
@@ -111,6 +112,7 @@
     </div>
   </div>
   <span id="user-email" style="font-size:12px;color:#6EE7B7;margin-right:12px;"></span>
+  <button class="logout-btn" onclick="openPassModal()" style="margin-right:8px;">🔑 Contrasenya</button>
   <button class="logout-btn" onclick="logout()">Tancar sessió</button>
 </header>
 
@@ -127,6 +129,30 @@
   </div>
   <div id="table-container"><div class="loading">Carregant...</div></div>
 </main>
+
+
+<!-- MODAL CANVI CONTRASENYA -->
+<div class="modal-overlay" id="modal-pass">
+  <div class="modal">
+    <h2>Canviar contrasenya</h2>
+    <div id="pass-error"></div>
+    <div id="pass-success"></div>
+    <div class="form-grid full">
+      <div class="field">
+        <label>Nova contrasenya</label>
+        <input type="password" id="new-pass" placeholder="Mínim 6 caràcters" onkeydown="if(event.key==='Enter')changePass()">
+      </div>
+      <div class="field" style="margin-top:0">
+        <label>Confirma la nova contrasenya</label>
+        <input type="password" id="new-pass2" placeholder="Repeteix la contrasenya" onkeydown="if(event.key==='Enter')changePass()">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closePassModal()">Cancel·lar</button>
+      <button class="btn btn-green" id="btn-change-pass" onclick="changePass()">Canviar</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL -->
 <div class="modal-overlay" id="modal">
@@ -315,6 +341,54 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+
+// ── CANVI CONTRASENYA ──────────────────────────────
+function openPassModal() {
+  document.getElementById('new-pass').value  = '';
+  document.getElementById('new-pass2').value = '';
+  document.getElementById('pass-error').innerHTML   = '';
+  document.getElementById('pass-success').innerHTML = '';
+  document.getElementById('modal-pass').classList.add('show');
+  document.getElementById('new-pass').focus();
+}
+
+function closePassModal() {
+  document.getElementById('modal-pass').classList.remove('show');
+}
+
+async function changePass() {
+  const p1  = document.getElementById('new-pass').value;
+  const p2  = document.getElementById('new-pass2').value;
+  const err = document.getElementById('pass-error');
+  const ok  = document.getElementById('pass-success');
+  err.innerHTML = ''; ok.innerHTML = '';
+
+  if (p1.length < 6) {
+    err.innerHTML = '<div class="error-msg">La contrasenya ha de tenir mínim 6 caràcters.</div>';
+    return;
+  }
+  if (p1 !== p2) {
+    err.innerHTML = '<div class="error-msg">Les contrasenyes no coincideixen.</div>';
+    return;
+  }
+
+  const btn = document.getElementById('btn-change-pass');
+  btn.disabled = true; btn.textContent = 'Canviant...';
+
+  const { error } = await sbAuth.auth.updateUser({ password: p1 });
+
+  btn.disabled = false; btn.textContent = 'Canviar';
+
+  if (error) {
+    err.innerHTML = `<div class="error-msg">Error: ${error.message}</div>`;
+  } else {
+    ok.innerHTML = '<div class="success-msg">✓ Contrasenya canviada correctament.</div>';
+    document.getElementById('new-pass').value  = '';
+    document.getElementById('new-pass2').value = '';
+    setTimeout(closePassModal, 1800);
+  }
 }
 
 // ── SUPABASE AUTH ─────────────────────────────────
