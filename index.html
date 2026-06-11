@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestió de Serveis — Esterilització</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root {
+    --green-dark:#064E3B; --green-mid:#065F46; --green:#059669; --green-light:#D1FAE5;
+    --blue:#1D6FA4; --blue-light:#E8F2FA;
+    --amber:#D97706; --amber-light:#FEF3C7;
+    --red:#DC2626; --red-light:#FEE2E2;
+    --gray-50:#F8FAFC; --gray-100:#F1F5F9; --gray-200:#E2E8F0;
+    --gray-400:#94A3B8; --gray-600:#475569; --gray-800:#1E293B;
+    --white:#FFFFFF; --font:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:var(--font); background:var(--gray-50); color:var(--gray-800); min-height:100vh; }
+  header { background:var(--green-dark); color:var(--white); padding:0 32px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .header-brand { display:flex; align-items:center; gap:12px; }
+  .header-brand .icon { width:32px; height:32px; background:var(--green); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .header-brand h1 { font-size:15px; font-weight:600; }
+  .header-brand span { font-size:12px; color:#6EE7B7; }
+  main { max-width:1000px; margin:0 auto; padding:32px 24px; }
+  .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  .section-title { font-size:20px; font-weight:700; color:var(--green-dark); }
+  .section-sub { font-size:13px; color:var(--gray-600); margin-top:4px; }
+  .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 20px; border-radius:8px; font-family:var(--font); font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all 0.15s; }
+  .btn-green { background:var(--green); color:var(--white); }
+  .btn-green:hover { filter:brightness(1.1); }
+  .btn-outline { background:var(--white); color:var(--gray-800); border:1.5px solid var(--gray-200); }
+  .btn-outline:hover { background:var(--gray-100); }
+  .btn-red { background:var(--red); color:var(--white); }
+  .btn-red:hover { filter:brightness(1.1); }
+  .btn-sm { padding:6px 12px; font-size:12px; }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .search-bar { display:flex; gap:12px; margin-bottom:20px; }
+  .search-bar input { flex:1; font-family:var(--font); font-size:14px; padding:10px 14px; border:1.5px solid var(--gray-200); border-radius:8px; }
+  .search-bar input:focus { outline:none; border-color:var(--green); }
+  table { width:100%; border-collapse:collapse; background:var(--white); border:1px solid var(--gray-200); border-radius:12px; overflow:hidden; }
+  thead { background:var(--gray-50); }
+  th { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--gray-400); padding:12px 16px; text-align:left; border-bottom:1.5px solid var(--gray-200); }
+  td { padding:12px 16px; border-bottom:1px solid var(--gray-100); font-size:13px; vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:var(--gray-50); }
+  .badge-actiu { background:var(--green-light); color:var(--green); padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; }
+  .badge-inactiu { background:var(--gray-100); color:var(--gray-400); padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; }
+  .mono { font-family:var(--mono); font-size:12px; }
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(6,78,59,0.5); z-index:200; align-items:center; justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:var(--white); border-radius:16px; padding:32px; max-width:520px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+  .modal h2 { font-size:18px; font-weight:700; color:var(--green-dark); margin-bottom:20px; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+  .form-grid.full { grid-template-columns:1fr; }
+  .field { display:flex; flex-direction:column; gap:6px; }
+  label { font-size:12px; font-weight:600; color:var(--gray-600); }
+  input, select { font-family:var(--font); font-size:14px; padding:10px 12px; border:1.5px solid var(--gray-200); border-radius:8px; width:100%; }
+  input:focus, select:focus { outline:none; border-color:var(--green); }
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; }
+  .error-msg { background:var(--red-light); color:var(--red); padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:14px; }
+  .success-msg { background:var(--green-light); color:var(--green); padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:14px; }
+  .loading { text-align:center; padding:48px; color:var(--gray-400); }
+  .empty { text-align:center; padding:48px; color:var(--gray-400); }
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--green-dark); color:var(--white); padding:14px 20px; border-radius:10px; font-size:14px; font-weight:500; z-index:999; opacity:0; transform:translateY(10px); transition:all 0.3s; pointer-events:none; }
+  .toast.show { opacity:1; transform:translateY(0); }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-brand">
+    <div class="icon">⚙️</div>
+    <div>
+      <h1>Gestió de Serveis — Esterilització</h1>
+      <span>Configuració de centres i serveis</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="top-bar">
+    <div>
+      <div class="section-title">Serveis configurats</div>
+      <div class="section-sub">Centres i serveis disponibles per fer peticions d'esterilització.</div>
+    </div>
+    <button class="btn btn-green" onclick="openModal()">+ Afegir servei</button>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="search" placeholder="🔍 Cerca per centre o nom de servei..." oninput="renderTable()">
+  </div>
+
+  <div id="table-container"><div class="loading">Carregant...</div></div>
+</main>
+
+<!-- MODAL AFEGIR/EDITAR -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modal-title">Afegir nou servei</h2>
+    <div id="modal-error"></div>
+    <div class="form-grid full">
+      <div class="field">
+        <label>Servei (de SteriControl)</label>
+        <select id="f-servei">
+          <option value="">— Carregant serveis... —</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Centre / Edifici</label>
+        <input type="text" id="f-centre" placeholder="Ex: Hospital Materno Infantil">
+      </div>
+      <div class="field">
+        <label>Extensió telefònica</label>
+        <input type="text" id="f-ext" placeholder="Ex: 4310">
+      </div>
+      <div class="field">
+        <label>Codi GFH</label>
+        <input type="text" id="f-cfh" placeholder="Ex: 4120">
+      </div>
+      <div class="field">
+        <label>Estat</label>
+        <select id="f-actiu">
+          <option value="true">Actiu</option>
+          <option value="false">Inactiu</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel·lar</button>
+      <button class="btn btn-green" id="btn-save" onclick="saveServei()">Desar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = 'https://cnfkwmswlnmhtflfumdn.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNuZmt3bXN3bG5taHRmbGZ1bWRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTkzNDYsImV4cCI6MjA5NjczNTM0Nn0.cJFq5vqV4at5_MDpJWfV5fDxchm9vfgNc1bSkCcduiw';
+const H = { 'Content-Type':'application/json', 'apikey':SB_KEY, 'Authorization':`Bearer ${SB_KEY}` };
+
+const get   = p => fetch(`${SB_URL}/rest/v1/${p}`, {headers:H}).then(r=>r.json());
+const post  = (t,b) => fetch(`${SB_URL}/rest/v1/${t}`, {method:'POST', headers:{...H,'Prefer':'return=representation'}, body:JSON.stringify(b)}).then(r=>r.json());
+const patch = (t,id,b) => fetch(`${SB_URL}/rest/v1/${t}?id=eq.${id}`, {method:'PATCH', headers:{...H,'Prefer':'return=representation'}, body:JSON.stringify(b)}).then(r=>r.json());
+const del   = (t,id) => fetch(`${SB_URL}/rest/v1/${t}?id=eq.${id}`, {method:'DELETE', headers:H});
+
+let serveisConfig = [];  // serveis_peticions
+let serveisBase   = [];  // serveis (de SteriControl)
+let editingId     = null;
+
+document.addEventListener('DOMContentLoaded', () => { loadAll(); });
+
+async function loadAll() {
+  try {
+    const [cfg, base] = await Promise.all([
+      get('serveis_peticions_view?select=*'),
+      get('serveis?actiu=eq.true&order=nom')
+    ]);
+    serveisConfig = Array.isArray(cfg)  ? cfg  : [];
+    serveisBase   = Array.isArray(base) ? base : [];
+    renderTable();
+    renderServeiSelect();
+  } catch(e) {
+    document.getElementById('table-container').innerHTML = `<div class="empty">Error carregant dades.</div>`;
+  }
+}
+
+function renderServeiSelect() {
+  const sel = document.getElementById('f-servei');
+  sel.innerHTML = '<option value="">— Selecciona servei —</option>' +
+    serveisBase.map(s => `<option value="${s.id}">${s.nom}</option>`).join('');
+}
+
+function renderTable() {
+  const q = (document.getElementById('search')?.value||'').toLowerCase();
+  let filtered = serveisConfig.filter(s =>
+    !q || s.centre.toLowerCase().includes(q) || s.servei_nom.toLowerCase().includes(q)
+  );
+  const container = document.getElementById('table-container');
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty">Cap servei configurat. Afegeix-ne un amb el botó de dalt.</div>`;
+    return;
+  }
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Centre</th>
+          <th>Servei (SteriControl)</th>
+          <th>Extensió</th>
+          <th>GFH</th>
+          <th>Estat</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(s => `
+          <tr>
+            <td><strong>${s.centre}</strong></td>
+            <td>${s.servei_nom}</td>
+            <td class="mono">${s.extensio||'—'}</td>
+            <td class="mono">${s.GFH||s.cfh||'—'}</td>
+            <td><span class="${s.actiu?'badge-actiu':'badge-inactiu'}">${s.actiu?'Actiu':'Inactiu'}</span></td>
+            <td style="display:flex;gap:8px;">
+              <button class="btn btn-outline btn-sm" onclick="editServei(${s.id})">✏️ Editar</button>
+              <button class="btn btn-red btn-sm" onclick="deleteServei(${s.id},'${s.servei_nom}')">🗑</button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function openModal(id=null) {
+  editingId = id;
+  document.getElementById('modal-error').innerHTML = '';
+  document.getElementById('modal-title').textContent = id ? 'Editar servei' : 'Afegir nou servei';
+  if (!id) {
+    document.getElementById('f-servei').value = '';
+    document.getElementById('f-centre').value = '';
+    document.getElementById('f-ext').value = '';
+    document.getElementById('f-cfh').value = '';
+    document.getElementById('f-actiu').value = 'true';
+  }
+  document.getElementById('modal').classList.add('show');
+}
+
+function editServei(id) {
+  const s = serveisConfig.find(x => x.id === id);
+  if (!s) return;
+  openModal(id);
+  document.getElementById('f-servei').value = s.servei_id;
+  document.getElementById('f-centre').value = s.centre;
+  document.getElementById('f-ext').value    = s.extensio||'';
+  document.getElementById('f-cfh').value    = s.GFH||s.cfh||'';
+  document.getElementById('f-actiu').value  = s.actiu ? 'true' : 'false';
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('show'); editingId = null; }
+
+async function saveServei() {
+  const servei_id = parseInt(document.getElementById('f-servei').value);
+  const centre    = document.getElementById('f-centre').value.trim();
+  const extensio  = document.getElementById('f-ext').value.trim();
+  const GFH       = document.getElementById('f-cfh').value.trim();
+  const actiu     = document.getElementById('f-actiu').value === 'true';
+  const errDiv    = document.getElementById('modal-error');
+
+  if (!servei_id || !centre) {
+    errDiv.innerHTML = '<div class="error-msg">Servei i centre són obligatoris.</div>';
+    return;
+  }
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true; btn.textContent = 'Desant...';
+
+  try {
+    if (editingId) {
+      await patch('serveis_peticions', editingId, { servei_id, centre, extensio, GFH, actiu });
+      showToast('✓ Servei actualitzat');
+    } else {
+      await post('serveis_peticions', { servei_id, centre, extensio, GFH, actiu });
+      showToast('✓ Servei afegit');
+    }
+    closeModal();
+    await loadAll();
+  } catch(e) {
+    errDiv.innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Desar';
+  }
+}
+
+async function deleteServei(id, nom) {
+  if (!confirm(`Eliminar "${nom}"? Aquesta acció no es pot desfer.`)) return;
+  await del('serveis_peticions', id);
+  showToast('🗑 Servei eliminat');
+  await loadAll();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
